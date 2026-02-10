@@ -1,7 +1,8 @@
 /* CSS 변수 - 화면 크기별 설정 */
 :root {
   --header-height: 60px;
-  --footer-height: 40px;
+  --footer-height: 0px;
+  --nav-height: 64px;
   --controls-height: 100px;
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
@@ -21,8 +22,10 @@
   --color-danger: #e74c3c;
   --color-text: #ffffff;
   --color-text-muted: #888888;
+  /* 대시보드·영수증 페이지 공통 최대 너비 (한 곳 수정 시 둘 다 적용) */
+  --page-max-width: 1200px;
   /* 카메라 영역 높이 자동 계산 */
-  --available-height: calc(100dvh - var(--header-height) - var(--footer-height) - var(--spacing-md) * 2);
+  --available-height: calc(100dvh - var(--header-height) - var(--nav-height) - var(--spacing-md) * 2);
   --camera-height: calc(var(--available-height) - var(--controls-height) - var(--spacing-md));
 }
 
@@ -135,16 +138,84 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Footer */
+/* Footer - 하단 네비게이션으로 대체되어 숨김 */
 .app-footer {
-  padding: var(--spacing-sm);
-  text-align: center;
-  background-color: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-bg-tertiary);
+  display: none;
+}
+
+/* 하단 네비게이션 공간 확보 */
+.app-main {
+  padding-bottom: calc(var(--nav-height) + var(--spacing-md));
+}
+
+/* 날짜 선택 공통 (대시보드·영수증 동일 스타일) */
+.date-range-section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.date-pickers {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.date-picker-wrapper {
+  flex: 1;
+  min-width: 120px;
+}
+
+.date-picker-wrapper label {
+  display: block;
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
-  height: var(--footer-height);
-  flex-shrink: 0;
+  margin-bottom: var(--spacing-xs);
+}
+
+.date-input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.date-separator {
+  color: var(--color-text-muted);
+  padding: 0 var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.quick-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.quick-buttons button {
+  flex: 1;
+  min-width: 70px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.quick-buttons button:hover,
+.quick-buttons button:active {
+  background: var(--color-primary);
+  color: #fff;
 }
 
 /* Camera Container */
@@ -417,7 +488,12 @@ body {
 
 /* 컬럼 너비 설정 - 고정 비율 */
 .result-table th:nth-child(1),
-.result-table td:nth-child(1) { width: 12%; } /* NO */
+.result-table td:nth-child(1) {
+  width: 12%; /* NO */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
 .result-table th:nth-child(2),
 .result-table td:nth-child(2) { width: auto; } /* 상품명: 나머지 */
 .result-table th:nth-child(3),
@@ -454,10 +530,14 @@ body {
   text-overflow: ellipsis;
 }
 
+/* 금액·숫자: 한 칸당 동일 너비로 위아래 정렬 */
 .result-table .price,
 .result-table .quantity {
   text-align: right;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
 }
 
 .result-table tfoot td {
@@ -473,6 +553,9 @@ body {
   text-align: right;
   color: var(--color-primary);
   font-size: var(--font-size-md);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
 }
 
 /* 수정 안내 문구 */
@@ -518,10 +601,13 @@ body {
   box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.3);
 }
 
-/* 숫자 입력 필드 우측 정렬 */
+/* 숫자 입력 필드 우측 정렬 + 고정폭 숫자 */
 .price .edit-input,
 .quantity .edit-input {
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
 }
 
 /* 영수증 정보 (상호명, 카드명, 구매일시) */

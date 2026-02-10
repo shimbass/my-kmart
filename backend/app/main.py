@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from .services.ocr_service import OCRService
 from .services.db_service import DatabaseService
+from .services.stats_service import StatsService
 import os
 import json
 
@@ -22,6 +23,7 @@ app.add_middleware(
 # 서비스 초기화
 ocr_service = OCRService()
 db_service = DatabaseService()
+stats_service = StatsService(db_service.client)
 
 
 class ImageRequest(BaseModel):
@@ -106,10 +108,24 @@ async def save_receipt(request: SaveReceiptRequest):
 
 
 @app.get("/api/receipts")
-async def get_receipts(limit: int = 20):
+async def get_receipts(
+    limit: int = 20,
+    start_date: str = None,
+    end_date: str = None,
+    store_name: str = None,
+    card_name: str = None,
+    search: str = None
+):
     """저장된 영수증 목록을 조회합니다."""
     try:
-        result = await db_service.get_receipts(limit)
+        result = await db_service.get_receipts(
+            limit=limit,
+            start_date=start_date,
+            end_date=end_date,
+            store_name=store_name,
+            card_name=card_name,
+            search=search
+        )
         return json_response(result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -130,6 +146,68 @@ async def delete_receipt(receipt_id: int):
     """영수증을 삭제합니다."""
     try:
         result = await db_service.delete_receipt(receipt_id)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Statistics APIs =====
+
+@app.get("/api/stats/summary")
+async def get_stats_summary(start_date: str = None, end_date: str = None):
+    """기간별 요약 통계를 조회합니다."""
+    try:
+        result = await stats_service.get_summary(start_date, end_date)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/monthly")
+async def get_monthly_stats(start_date: str = None, end_date: str = None):
+    """월별 지출 통계를 조회합니다."""
+    try:
+        result = await stats_service.get_monthly_stats(start_date, end_date)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/by-store")
+async def get_store_stats(start_date: str = None, end_date: str = None):
+    """상점별 지출 통계를 조회합니다."""
+    try:
+        result = await stats_service.get_store_stats(start_date, end_date)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/by-card")
+async def get_card_stats(start_date: str = None, end_date: str = None):
+    """카드별 지출 통계를 조회합니다."""
+    try:
+        result = await stats_service.get_card_stats(start_date, end_date)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/frequent-items")
+async def get_frequent_items(start_date: str = None, end_date: str = None, limit: int = 10):
+    """자주 구매하는 상품 통계를 조회합니다."""
+    try:
+        result = await stats_service.get_frequent_items(start_date, end_date, limit)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/store/{store_name}/cards")
+async def get_store_card_stats(store_name: str, start_date: str = None, end_date: str = None):
+    """특정 상점의 카드별 지출 통계를 조회합니다."""
+    try:
+        result = await stats_service.get_store_card_stats(store_name, start_date, end_date)
         return json_response(result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

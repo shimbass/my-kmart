@@ -1,0 +1,352 @@
+/* 대시보드 - App.css 디자인 시스템 변수 사용 (다크 테마 일관) */
+.dashboard {
+  padding: var(--spacing-md);
+  padding-bottom: calc(var(--nav-height) + var(--spacing-lg));
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.date-pickers {
+  margin-bottom: var(--spacing-sm);
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.summary-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.card-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.card-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.chart-section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.chart-section h3 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text);
+}
+
+.chart-section.half {
+  flex: 1;
+  min-width: 280px;
+}
+
+.charts-row {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.chart-container {
+  width: 100%;
+}
+
+.chart-tooltip {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.tooltip-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.tooltip-value {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Store List */
+.store-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.store-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  gap: var(--spacing-md);
+}
+
+.store-item:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.store-item.active {
+  background: rgba(74, 144, 217, 0.15);
+  border-color: var(--color-primary);
+}
+
+.store-rank {
+  width: 28px;
+  height: 28px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.store-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-visits {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.store-stats {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.store-amount {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.store-percent {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.store-arrow {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+/* Store Card Detail */
+.store-card-detail {
+  background: var(--color-bg);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  margin: var(--spacing-sm) 0 var(--spacing-sm) 40px;
+  overflow: hidden;
+}
+
+.card-list-header {
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+  gap: var(--spacing-md);
+}
+
+.card-item:last-child {
+  border-bottom: none;
+}
+
+.card-name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.card-usage {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.card-amount {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.card-loading,
+.card-empty {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.frequent-items {
+  overflow-x: auto;
+}
+
+.frequent-items table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.frequent-items th,
+.frequent-items td {
+  padding: var(--spacing-md) var(--spacing-sm);
+  text-align: center;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.frequent-items th {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+}
+
+.frequent-items td {
+  color: var(--color-text);
+}
+
+.frequent-items td.item-name {
+  text-align: left;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 순위/구매횟수/총 금액/평균 주기: 고정폭 숫자 정렬 */
+.frequent-items td:nth-child(1),
+.frequent-items td:nth-child(3),
+.frequent-items td:nth-child(4),
+.frequent-items td:nth-child(5) {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+/* 총 금액: 헤더는 가운데, 데이터는 우측 정렬 */
+.frequent-items th:nth-child(4) {
+  text-align: center;
+}
+.frequent-items td:nth-child(4) {
+  text-align: right;
+}
+
+.loading {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  color: var(--color-text-muted);
+}
+
+.no-data {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  color: var(--color-text-muted);
+}
+
+.no-data p {
+  margin: var(--spacing-sm) 0;
+}
+
+@media (max-width: 480px) {
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+  }
+
+  .card-label {
+    margin-bottom: 0;
+  }
+
+  .card-value {
+    font-size: var(--font-size-md);
+  }
+
+  .charts-row {
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 768px) {
+  .dashboard {
+    padding-top: var(--spacing-lg);
+  }
+}

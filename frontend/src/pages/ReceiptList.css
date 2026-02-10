@@ -1,0 +1,456 @@
+/* 영수증 목록 - App.css 디자인 시스템 변수 사용 (다크 테마 일관) */
+/* 대시보드와 동일한 너비 (App.css --page-max-width) */
+.receipt-list-page {
+  padding: var(--spacing-md);
+  padding-bottom: calc(var(--nav-height) + var(--spacing-lg));
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* 검색 섹션 (날짜 영역과 구분) */
+.receipt-search-section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.receipt-search-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.receipt-search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.receipt-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* 상점·카드 필터 (도톰한 높이로 시각적 구분) */
+.receipt-filters-row {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md) var(--spacing-lg);
+  min-height: 52px;
+  margin-bottom: var(--spacing-md);
+}
+
+/* 상점·카드 셀렉트와 초기화 버튼 동일 높이(44px) */
+.receipt-filters-row .filter-select,
+.receipt-filters-row .clear-filters-btn {
+  height: 44px;
+  padding: 0 var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+.receipt-filters-row .clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 셀렉트: 입체감 제거, 평면 디자인 (주변 입력과 일관) */
+.receipt-filters-row .filter-select {
+  flex: 1;
+  min-width: 120px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-md) center;
+  padding-right: 2rem;
+}
+
+.receipt-filters-row .filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.clear-filters-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.clear-filters-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clear-filters-btn:not(:disabled) {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.clear-filters-btn:not(:disabled):hover,
+.clear-filters-btn:not(:disabled):active {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+/* 영수증 확인 섹션 */
+.receipts-section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.receipts-section h3 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text);
+}
+
+.receipts-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* 영수증 카드 */
+.receipt-card {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  gap: var(--spacing-md);
+}
+
+.receipt-card:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.receipt-card:active {
+  border-color: var(--color-primary);
+  background: rgba(74, 144, 217, 0.1);
+}
+
+/* 날짜 배지 */
+.receipt-date-badge {
+  width: 44px;
+  height: 44px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--border-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.receipt-date-badge .day {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+}
+
+.receipt-date-badge .month {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  opacity: 0.9;
+  color: #fff;
+}
+
+.receipt-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.receipt-item-store {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.receipt-item-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.receipt-item-time {
+  margin-right: var(--spacing-sm);
+  color: var(--color-text-muted);
+}
+
+.receipt-item-card {
+  color: var(--color-text-muted);
+}
+
+.receipt-item-stats {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.receipt-item-amount {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.receipt-arrow {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.loading,
+.no-receipts {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  color: var(--color-text-muted);
+}
+
+.no-receipts p {
+  margin: var(--spacing-sm) 0;
+  color: var(--color-text-muted);
+}
+
+/* 모달 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: var(--spacing-md);
+}
+
+.modal-content {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--color-bg-tertiary);
+  border-radius: 50%;
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  transition: background 0.2s, color 0.2s;
+}
+
+.modal-close:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.modal-header {
+  background: var(--color-bg);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.modal-header h2 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text);
+  padding-right: 32px;
+}
+
+.modal-info-row {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  gap: var(--spacing-md);
+}
+
+.modal-info-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.modal-info-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.modal-items {
+  padding: 0;
+  background: var(--color-bg-secondary);
+}
+
+.modal-items table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.modal-items th,
+.modal-items td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: center;
+  border-bottom: 1px solid var(--color-bg-tertiary);
+}
+
+.modal-items th {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+}
+
+.modal-items th:nth-child(3),
+.modal-items th:nth-child(4),
+.modal-items th:nth-child(5) {
+  text-align: right;
+}
+
+.modal-items td {
+  color: var(--color-text);
+  background: var(--color-bg-secondary);
+}
+
+.modal-items td.item-name {
+  text-align: left;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 모달 테이블 단가/수량/금액 컬럼: 고정폭 숫자 정렬 */
+.modal-items td:nth-child(3),
+.modal-items td:nth-child(4),
+.modal-items td:nth-child(5) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.modal-items tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.modal-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-bg-tertiary);
+}
+
+.modal-total span:first-child {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.total-amount {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--color-bg-tertiary);
+  background: var(--color-bg-secondary);
+}
+
+.delete-btn {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: var(--color-danger);
+  color: #fff;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.delete-btn:hover,
+.delete-btn:active {
+  background: #c0392b;
+  opacity: 0.95;
+}
+
+.modal-loading,
+.modal-error {
+  text-align: center;
+  padding: var(--spacing-lg) var(--spacing-md);
+  color: var(--color-text-muted);
+  background: var(--color-bg-secondary);
+}
+
+@media (min-width: 768px) {
+  .receipt-list-page {
+    padding-top: var(--spacing-lg);
+  }
+}

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from supabase import create_client, Client
 import os
+import re
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -69,21 +71,100 @@ class DatabaseService:
         except Exception as e:
             return {"success": False, "error": f"저장 오류: {str(e)}"}
 
-    async def get_receipts(self, limit: int = 20) -> dict:
+    def _parse_purchase_date(self, date_str: str) -> datetime | None:
+        """purchase_datetime 문자열을 datetime으로 변환"""
+        if not date_str:
+            return None
+        match = re.match(r"(\d{2})-(\d{2})-(\d{2})", date_str)
+        if match:
+            try:
+                return datetime(
+                    2000 + int(match.group(1)),
+                    int(match.group(2)),
+                    int(match.group(3))
+                )
+            except ValueError:
+                return None
+        return None
+
+    def _parse_filter_date(self, date_str: str) -> datetime | None:
+        """필터 날짜 문자열(YY-MM-DD)을 datetime으로 변환"""
+        if not date_str:
+            return None
+        try:
+            if len(date_str) == 8:
+                return datetime.strptime(date_str, "%y-%m-%d")
+            return datetime.strptime(date_str[:10], "%Y-%m-%d")
+        except ValueError:
+            return None
+
+    async def get_receipts(
+        self,
+        limit: int = 20,
+        start_date: str = None,
+        end_date: str = None,
+        store_name: str = None,
+        card_name: str = None,
+        search: str = None
+    ) -> dict:
         """저장된 영수증 목록을 조회합니다."""
         if not self.client:
             return {"success": False, "error": "데이터베이스 연결이 설정되지 않았습니다."}
 
         try:
-            result = self.client.table("receipts")\
-                .select("*")\
-                .order("created_at", desc=True)\
-                .limit(limit)\
-                .execute()
+            # 기본 쿼리
+            query = self.client.table("receipts").select("*")
+
+            # 상점 필터
+            if store_name:
+                query = query.eq("store_name", store_name)
+
+            # 카드 필터
+            if card_name:
+                query = query.eq("card_name", card_name)
+
+            result = query.order("created_at", desc=True).limit(limit * 5).execute()
+            receipts = result.data
+
+            # 날짜 필터 (클라이언트 측 필터링 - purchase_datetime이 문자열이므로)
+            start = self._parse_filter_date(start_date)
+            end = self._parse_filter_date(end_date)
+
+            if start or end:
+                filtered = []
+                for r in receipts:
+                    purchase_dt = self._parse_purchase_date(r.get("purchase_datetime", ""))
+                    if not purchase_dt:
+                        continue
+                    if start and purchase_dt < start:
+                        continue
+                    if end and purchase_dt > end:
+                        continue
+                    filtered.append(r)
+                receipts = filtered
+
+            # 상품명 검색
+            if search:
+                receipt_ids = [r["id"] for r in receipts]
+                if receipt_ids:
+                    items_result = self.client.table("items")\
+                        .select("receipt_id")\
+                        .in_("receipt_id", receipt_ids)\
+                        .ilike("name", f"%{search}%")\
+                        .execute()
+
+                    matching_ids = set(item["receipt_id"] for item in items_result.data)
+                    receipts = [r for r in receipts if r["id"] in matching_ids]
+
+            # purchase_datetime 기준 정렬 (최신순)
+            receipts.sort(
+                key=lambda r: self._parse_purchase_date(r.get("purchase_datetime", "")) or datetime.min,
+                reverse=True
+            )
 
             return {
                 "success": True,
-                "receipts": result.data
+                "receipts": receipts[:limit]
             }
 
         except Exception as e:
