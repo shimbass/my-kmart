@@ -1,0 +1,18 @@
+{
+  "name": "K마트 영수증 스캐너",
+  "short_name": "K마트 스캐너",
+  "description": "영수증 촬영 후 상품 정보를 인식하고 저장합니다.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a1a1a",
+  "theme_color": "#2a2a2a",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
