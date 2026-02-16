@@ -231,6 +231,10 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   flex-shrink: 0;
+  width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .card-amount {
@@ -238,6 +242,8 @@
   font-weight: 600;
   color: var(--color-primary);
   flex-shrink: 0;
+  min-width: 90px;
+  text-align: right;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;

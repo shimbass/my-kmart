@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import { ko } from 'date-fns/locale';
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
-import { getReceipts, getReceiptDetail, deleteReceipt } from '../services/api';
+import { getReceipts, getReceiptDetail } from '../services/api';
 import 'react-datepicker/dist/react-datepicker.css';
 import './ReceiptList.css';
 
@@ -67,22 +67,6 @@ function ReceiptList() {
       console.error('Failed to fetch receipt detail:', err);
     } finally {
       setDetailLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedReceipt) return;
-    if (!confirm('이 영수증을 삭제하시겠습니까?')) return;
-
-    try {
-      const response = await deleteReceipt(selectedReceipt.id);
-      if (response.success) {
-        setSelectedReceipt(null);
-        setDetailData(null);
-        fetchReceipts();
-      }
-    } catch (err) {
-      console.error('Failed to delete receipt:', err);
     }
   };
 
@@ -336,12 +320,6 @@ function ReceiptList() {
                   <span className="total-amount">
                     ₩{formatCurrency(detailData.receipt?.total_amount)}
                   </span>
-                </div>
-
-                <div className="modal-actions">
-                  <button className="delete-btn" onClick={handleDelete}>
-                    삭제
-                  </button>
                 </div>
               </>
             ) : (
