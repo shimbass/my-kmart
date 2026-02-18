@@ -205,29 +205,28 @@ class DatabaseService:
 
     # ── 영수증 상세 조회 ─────────────────────────────────────────────────────
     async def get_receipt_detail(self, receipt_id: int) -> dict:
-        """특정 영수증의 상세 정보를 조회합니다. (할인 항목 포함)"""
+        """특정 영수증의 상세 정보를 조회합니다. (할인 항목 포함)
+        Supabase 조인으로 3 round-trip → 1 round-trip
+        """
         if not self.client:
             return {"success": False, "error": "데이터베이스 연결이 설정되지 않았습니다."}
 
         try:
-            receipt_result = self.client.table("receipts")\
-                .select("id, store_name, card_name, purchase_datetime, total_amount, created_at")\
-                .eq("id", receipt_id).execute()
+            result = self.client.table("receipts").select(
+                "id, store_name, card_name, purchase_datetime, total_amount, created_at,"
+                "items(id, no, name, unit_price, quantity, amount),"
+                "discounts(id, name, amount, item_id)"
+            ).eq("id", receipt_id).execute()
 
-            if not receipt_result.data:
+            if not result.data:
                 return {"success": False, "error": "영수증을 찾을 수 없습니다."}
 
-            items_result = self.client.table("items")\
-                .select("*").eq("receipt_id", receipt_id).execute()
-
-            discounts_result = self.client.table("discounts")\
-                .select("*").eq("receipt_id", receipt_id).execute()
-
+            row = result.data[0]
             return {
                 "success":   True,
-                "receipt":   receipt_result.data[0],
-                "items":     items_result.data,
-                "discounts": discounts_result.data,
+                "receipt":   {k: v for k, v in row.items() if k not in ("items", "discounts")},
+                "items":     row.get("items", []),
+                "discounts": row.get("discounts", []),
             }
 
         except Exception as e:
@@ -310,7 +309,9 @@ class DatabaseService:
         details = []
 
         try:
-            all_items_result = self.client.table("items").select("*").order("id").execute()
+            # no 수정: 필요한 컬럼만 조회, receipt_id+id 순 정렬로 번호 부여 순서 보장
+            all_items_result = self.client.table("items")\
+                .select("id, no, receipt_id").order("receipt_id").order("id").execute()
 
             receipt_items: dict[int, list] = {}
             for item in all_items_result.data:
@@ -327,7 +328,11 @@ class DatabaseService:
                         no_fixed += 1
                         details.append(f"[no] item id={item['id']} receipt_id={rid} → {new_no}")
 
-            receipts_result = self.client.table("receipts").select("*").execute()
+            # card_name 수정: NULL/빈값인 행만 조회, raw_text 포함 필요 컬럼만 선택
+            receipts_result = self.client.table("receipts")\
+                .select("id, store_name, card_name, raw_text")\
+                .or_("card_name.is.null,card_name.eq.")\
+                .execute()
 
             for receipt in receipts_result.data:
                 card_name = receipt.get("card_name")
