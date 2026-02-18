@@ -150,6 +150,9 @@ class DatabaseService:
             return {"success": False, "error": f"저장 오류: {str(e)}"}
 
     # ── 영수증 목록 조회 ─────────────────────────────────────────────────────
+    # raw_text를 제외한 영수증 목록 컬럼
+    _RECEIPT_LIST_COLS = "id, store_name, card_name, purchase_datetime, purchase_date, total_amount, created_at"
+
     async def get_receipts(
         self,
         limit: int = 20,
@@ -160,43 +163,42 @@ class DatabaseService:
         search: str = None
     ) -> dict:
         """저장된 영수증 목록을 조회합니다.
-        purchase_date(TIMESTAMPTZ)로 DB 레벨에서 날짜 필터링합니다.
+        - raw_text 제외: 목록에서 불필요한 대용량 컬럼 전송 방지
+        - 검색 시 items 먼저 조회: limit 적용 전 매칭 receipt_id 확보
         """
         if not self.client:
             return {"success": False, "error": "데이터베이스 연결이 설정되지 않았습니다."}
 
         try:
-            query = self.client.table("receipts").select("*")
+            start = self._parse_filter_date(start_date)
+            end   = self._parse_filter_date(end_date)
+
+            # 검색어가 있으면 items에서 먼저 matching receipt_id 확보
+            search_ids: set | None = None
+            if search:
+                items_result = self.client.table("items")\
+                    .select("receipt_id")\
+                    .ilike("name", f"%{search}%")\
+                    .execute()
+                search_ids = set(item["receipt_id"] for item in items_result.data)
+                if not search_ids:
+                    return {"success": True, "receipts": []}
+
+            query = self.client.table("receipts").select(self._RECEIPT_LIST_COLS)
 
             if store_name:
                 query = query.eq("store_name", store_name)
             if card_name:
                 query = query.eq("card_name", card_name)
-
-            # ★ DB 레벨 날짜 필터링 (Python 필터링 제거)
-            start = self._parse_filter_date(start_date)
-            end   = self._parse_filter_date(end_date)
             if start:
                 query = query.gte("purchase_date", start.isoformat())
             if end:
                 query = query.lt("purchase_date", (end + timedelta(days=1)).isoformat())
+            if search_ids is not None:
+                query = query.in_("id", list(search_ids))
 
-            # ★ DB 레벨 정렬 + 정확한 limit (limit * 5 제거)
             result = query.order("purchase_date", desc=True).limit(limit).execute()
-            receipts = result.data
-
-            # 상품명 검색
-            if search and receipts:
-                receipt_ids = [r["id"] for r in receipts]
-                items_result = self.client.table("items")\
-                    .select("receipt_id")\
-                    .in_("receipt_id", receipt_ids)\
-                    .ilike("name", f"%{search}%")\
-                    .execute()
-                matching_ids = set(item["receipt_id"] for item in items_result.data)
-                receipts = [r for r in receipts if r["id"] in matching_ids]
-
-            return {"success": True, "receipts": receipts}
+            return {"success": True, "receipts": result.data}
 
         except Exception as e:
             return {"success": False, "error": f"조회 오류: {str(e)}"}
@@ -209,7 +211,8 @@ class DatabaseService:
 
         try:
             receipt_result = self.client.table("receipts")\
-                .select("*").eq("id", receipt_id).execute()
+                .select("id, store_name, card_name, purchase_datetime, total_amount, created_at")\
+                .eq("id", receipt_id).execute()
 
             if not receipt_result.data:
                 return {"success": False, "error": "영수증을 찾을 수 없습니다."}
