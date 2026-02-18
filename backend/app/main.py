@@ -211,3 +211,18 @@ async def get_store_card_stats(store_name: str, start_date: str = None, end_date
         return json_response(result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== Admin APIs =====
+
+@app.post("/api/admin/cleanup")
+async def cleanup_data():
+    """기존 DB 데이터 유효성 검사 및 정리.
+    - items.no 없으면 레코드 순서대로 001부터 부여
+    - receipts.card_name 없으면 raw_text 분석으로 결제수단 추론
+    """
+    try:
+        result = await db_service.cleanup_data()
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

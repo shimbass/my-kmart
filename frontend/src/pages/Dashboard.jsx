@@ -7,6 +7,23 @@ import { getStats, getMonthlyStats, getStoreStats, getFrequentItems, getStoreCar
 import 'react-datepicker/dist/react-datepicker.css';
 import './Dashboard.css';
 
+// ── 컴포넌트 외부 정의: 렌더마다 재생성되지 않음 ──────────────────────────
+const formatCurrency = (value) => new Intl.NumberFormat('ko-KR').format(value);
+const formatDateParam = (date) => format(date, 'yy-MM-dd');
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="chart-tooltip">
+        <p className="tooltip-label">{label}</p>
+        <p className="tooltip-value">₩{formatCurrency(payload[0].value)}</p>
+      </div>
+    );
+  }
+  return null;
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 function Dashboard() {
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState(new Date());
@@ -21,35 +38,40 @@ function Dashboard() {
   const [storeCardData, setStoreCardData] = useState([]);
   const [storeCardLoading, setStoreCardLoading] = useState(false);
 
-  const formatDateParam = (date) => format(date, 'yy-MM-dd');
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const start = formatDateParam(startDate);
-      const end = formatDateParam(endDate);
-
-      const [summaryRes, monthlyRes, storeRes, itemsRes] = await Promise.all([
-        getStats(start, end),
-        getMonthlyStats(start, end),
-        getStoreStats(start, end),
-        getFrequentItems(start, end, 10)
-      ]);
-
-      if (summaryRes.success) setSummary(summaryRes.data);
-      if (monthlyRes.success) setMonthlyData(monthlyRes.data);
-      if (storeRes.success) setStoreData(storeRes.data);
-      if (itemsRes.success) setFrequentItems(itemsRes.data);
-    } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // AbortController로 이전 요청 취소 → 날짜 빠르게 변경해도 오래된 응답이 화면에 표시되지 않음
   useEffect(() => {
-    fetchData();
+    const controller = new AbortController();
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const start = formatDateParam(startDate);
+        const end = formatDateParam(endDate);
+
+        const [summaryRes, monthlyRes, storeRes, itemsRes] = await Promise.all([
+          getStats(start, end, controller.signal),
+          getMonthlyStats(start, end, controller.signal),
+          getStoreStats(start, end, controller.signal),
+          getFrequentItems(start, end, 10, controller.signal),
+        ]);
+
+        if (summaryRes.success) setSummary(summaryRes.data);
+        if (monthlyRes.success) setMonthlyData(monthlyRes.data);
+        if (storeRes.success) setStoreData(storeRes.data);
+        if (itemsRes.success) setFrequentItems(itemsRes.data);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch dashboard data:', err);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
     setSelectedStore(null);
+    load();
+
+    return () => controller.abort();
   }, [startDate, endDate]);
 
   const handleStoreClick = async (store) => {
@@ -99,25 +121,9 @@ function Dashboard() {
     }
   };
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('ko-KR').format(value);
-  };
-
   const getPercent = (amount) => {
     if (!summary.total_amount) return 0;
     return ((amount / summary.total_amount) * 100).toFixed(1);
-  };
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="chart-tooltip">
-          <p className="tooltip-label">{label}</p>
-          <p className="tooltip-value">₩{formatCurrency(payload[0].value)}</p>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (

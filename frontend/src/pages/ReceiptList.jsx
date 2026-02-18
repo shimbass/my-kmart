@@ -6,6 +6,32 @@ import { getReceipts, getReceiptDetail } from '../services/api';
 import 'react-datepicker/dist/react-datepicker.css';
 import './ReceiptList.css';
 
+// ── 컴포넌트 외부 정의: 렌더마다 재생성되지 않음 ──────────────────────────
+const formatCurrency = (value) => new Intl.NumberFormat('ko-KR').format(value || 0);
+
+const parseDateBadge = (dateStr) => {
+  if (!dateStr) return { day: '-', month: '-' };
+  const match = dateStr.match(/(\d{2})-(\d{2})-(\d{2})\s*(\d{2}):(\d{2})/);
+  if (match) {
+    return {
+      day: match[3],
+      month: `${match[2]}월`,
+      time: `${match[4]}:${match[5]}`,
+    };
+  }
+  return { day: '-', month: '-', time: '' };
+};
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return '-';
+  const match = dateStr.match(/(\d{2})-(\d{2})-(\d{2})\s*(\d{2}):(\d{2})/);
+  if (match) {
+    return `20${match[1]}년 ${match[2]}월 ${match[3]}일 ${match[4]}:${match[5]}`;
+  }
+  return dateStr;
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 function ReceiptList() {
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,40 +46,53 @@ function ReceiptList() {
   const [cardFilter, setCardFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // 검색어 디바운스: 400ms 동안 입력이 없을 때 실제 API 요청
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const [stores, setStores] = useState([]);
   const [cards, setCards] = useState([]);
 
-  const fetchReceipts = async () => {
-    setLoading(true);
-    try {
-      const params = { limit: 100 };
-      if (startDate) params.start_date = format(startDate, 'yy-MM-dd');
-      if (endDate) params.end_date = format(endDate, 'yy-MM-dd');
-      if (storeFilter) params.store_name = storeFilter;
-      if (cardFilter) params.card_name = cardFilter;
-      if (searchQuery) params.search = searchQuery;
-
-      const response = await getReceipts(params);
-      if (response.success) {
-        const receiptList = response.receipts || [];
-        setReceipts(receiptList);
-
-        // Extract unique stores and cards for filters
-        const uniqueStores = [...new Set(receiptList.map(r => r.store_name).filter(Boolean))];
-        const uniqueCards = [...new Set(receiptList.map(r => r.card_name).filter(Boolean))];
-        setStores(uniqueStores);
-        setCards(uniqueCards);
-      }
-    } catch (err) {
-      console.error('Failed to fetch receipts:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // AbortController로 이전 요청 취소 → 빠른 필터 변경 시 오래된 응답이 표시되지 않음
   useEffect(() => {
-    fetchReceipts();
-  }, [startDate, endDate, storeFilter, cardFilter, searchQuery]);
+    const controller = new AbortController();
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const params = { limit: 100 };
+        if (startDate) params.start_date = format(startDate, 'yy-MM-dd');
+        if (endDate) params.end_date = format(endDate, 'yy-MM-dd');
+        if (storeFilter) params.store_name = storeFilter;
+        if (cardFilter) params.card_name = cardFilter;
+        if (debouncedSearch) params.search = debouncedSearch;
+
+        const response = await getReceipts(params, controller.signal);
+        if (response.success) {
+          const receiptList = response.receipts || [];
+          setReceipts(receiptList);
+
+          // Extract unique stores and cards for filters
+          const uniqueStores = [...new Set(receiptList.map(r => r.store_name).filter(Boolean))];
+          const uniqueCards = [...new Set(receiptList.map(r => r.card_name).filter(Boolean))];
+          setStores(uniqueStores);
+          setCards(uniqueCards);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch receipts:', err);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => controller.abort();
+  }, [startDate, endDate, storeFilter, cardFilter, debouncedSearch]);
 
   const handleReceiptClick = async (receipt) => {
     setSelectedReceipt(receipt);
@@ -73,33 +112,6 @@ function ReceiptList() {
   const closeModal = () => {
     setSelectedReceipt(null);
     setDetailData(null);
-  };
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('ko-KR').format(value || 0);
-  };
-
-  // 날짜 배지용 파싱
-  const parseDateBadge = (dateStr) => {
-    if (!dateStr) return { day: '-', month: '-' };
-    const match = dateStr.match(/(\d{2})-(\d{2})-(\d{2})\s*(\d{2}):(\d{2})/);
-    if (match) {
-      return {
-        day: match[3],
-        month: `${match[2]}월`,
-        time: `${match[4]}:${match[5]}`
-      };
-    }
-    return { day: '-', month: '-', time: '' };
-  };
-
-  const formatDateTime = (dateStr) => {
-    if (!dateStr) return '-';
-    const match = dateStr.match(/(\d{2})-(\d{2})-(\d{2})\s*(\d{2}):(\d{2})/);
-    if (match) {
-      return `20${match[1]}년 ${match[2]}월 ${match[3]}일 ${match[4]}:${match[5]}`;
-    }
-    return dateStr;
   };
 
   const clearFilters = () => {

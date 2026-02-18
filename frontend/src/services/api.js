@@ -23,8 +23,6 @@ export async function checkHealth() {
 }
 
 export async function saveReceipt(data) {
-  console.log('저장 요청 데이터:', JSON.stringify(data, null, 2));
-
   const response = await fetch(`${API_BASE_URL}/api/receipts`, {
     method: 'POST',
     headers: {
@@ -34,7 +32,6 @@ export async function saveReceipt(data) {
   });
 
   const result = await response.json();
-  console.log('저장 응답:', result);
 
   if (!response.ok) {
     throw new Error(result.detail || `저장 오류: ${response.status}`);
@@ -43,7 +40,7 @@ export async function saveReceipt(data) {
   return result;
 }
 
-export async function getReceipts(params = {}) {
+export async function getReceipts(params = {}, signal) {
   const searchParams = new URLSearchParams();
 
   // 기존 방식 호환 (숫자가 오면 limit으로 처리)
@@ -60,12 +57,12 @@ export async function getReceipts(params = {}) {
 
   const queryString = searchParams.toString();
   const url = `${API_BASE_URL}/api/receipts${queryString ? '?' + queryString : ''}`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
   return response.json();
 }
 
-export async function getReceiptDetail(id) {
-  const response = await fetch(`${API_BASE_URL}/api/receipts/${id}`);
+export async function getReceiptDetail(id, signal) {
+  const response = await fetch(`${API_BASE_URL}/api/receipts/${id}`, { signal });
   return response.json();
 }
 
@@ -77,49 +74,49 @@ export async function deleteReceipt(id) {
 }
 
 // Statistics APIs
-export async function getStats(startDate, endDate) {
+export async function getStats(startDate, endDate, signal) {
   const params = new URLSearchParams();
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
 
-  const response = await fetch(`${API_BASE_URL}/api/stats/summary?${params.toString()}`);
+  const response = await fetch(`${API_BASE_URL}/api/stats/summary?${params.toString()}`, { signal });
   return response.json();
 }
 
-export async function getMonthlyStats(startDate, endDate) {
+export async function getMonthlyStats(startDate, endDate, signal) {
   const params = new URLSearchParams();
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
 
-  const response = await fetch(`${API_BASE_URL}/api/stats/monthly?${params.toString()}`);
+  const response = await fetch(`${API_BASE_URL}/api/stats/monthly?${params.toString()}`, { signal });
   return response.json();
 }
 
-export async function getStoreStats(startDate, endDate) {
+export async function getStoreStats(startDate, endDate, signal) {
   const params = new URLSearchParams();
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
 
-  const response = await fetch(`${API_BASE_URL}/api/stats/by-store?${params.toString()}`);
+  const response = await fetch(`${API_BASE_URL}/api/stats/by-store?${params.toString()}`, { signal });
   return response.json();
 }
 
-export async function getCardStats(startDate, endDate) {
+export async function getCardStats(startDate, endDate, signal) {
   const params = new URLSearchParams();
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
 
-  const response = await fetch(`${API_BASE_URL}/api/stats/by-card?${params.toString()}`);
+  const response = await fetch(`${API_BASE_URL}/api/stats/by-card?${params.toString()}`, { signal });
   return response.json();
 }
 
-export async function getFrequentItems(startDate, endDate, limit = 10) {
+export async function getFrequentItems(startDate, endDate, limit = 10, signal) {
   const params = new URLSearchParams();
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
   params.append('limit', limit);
 
-  const response = await fetch(`${API_BASE_URL}/api/stats/frequent-items?${params.toString()}`);
+  const response = await fetch(`${API_BASE_URL}/api/stats/frequent-items?${params.toString()}`, { signal });
   return response.json();
 }
 

@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navigation from './components/common/Navigation';
 import ScanPage from './pages/ScanPage';
-import Dashboard from './pages/Dashboard';
-import ReceiptList from './pages/ReceiptList';
 import './App.css';
+
+// 해당 페이지에 처음 진입할 때만 JS 청크를 다운로드
+const Dashboard   = lazy(() => import('./pages/Dashboard'));
+const ReceiptList = lazy(() => import('./pages/ReceiptList'));
 
 function AppContent() {
   const location = useLocation();
@@ -91,11 +93,13 @@ function AppContent() {
       </header>
 
       <main className="app-main">
-        <Routes>
-          <Route path="/" element={<ScanPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/receipts" element={<ReceiptList />} />
-        </Routes>
+        <Suspense fallback={<div className="loading">로딩 중...</div>}>
+          <Routes>
+            <Route path="/" element={<ScanPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/receipts" element={<ReceiptList />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <Navigation />
