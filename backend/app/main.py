@@ -213,6 +213,22 @@ async def get_store_card_stats(store_name: str, start_date: str = None, end_date
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class DiscountRequest(BaseModel):
+    name: str
+    amount: int
+    item_id: int | None = None
+
+
+@app.post("/api/receipts/{receipt_id}/discounts")
+async def add_discount(receipt_id: int, request: DiscountRequest):
+    """특정 영수증에 할인 항목을 추가합니다."""
+    try:
+        result = await db_service.add_discount(receipt_id, request.name, request.amount, request.item_id)
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ===== Admin APIs =====
 
 @app.post("/api/admin/cleanup")
@@ -223,6 +239,19 @@ async def cleanup_data():
     """
     try:
         result = await db_service.cleanup_data()
+        return json_response(result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/migrate-discounts")
+async def migrate_discounts():
+    """기존 items 테이블의 할인 항목을 discounts 테이블로 이전합니다.
+    실행 전 Supabase에서 discounts 테이블이 생성되어 있어야 합니다.
+    (backend/scripts/create_discounts_table.sql 참고)
+    """
+    try:
+        result = await db_service.migrate_discounts()
         return json_response(result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

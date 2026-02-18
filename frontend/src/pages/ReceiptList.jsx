@@ -314,15 +314,51 @@ function ReceiptList() {
                       </tr>
                     </thead>
                     <tbody>
-                      {detailData.items?.map((item, index) => (
-                        <tr key={index}>
-                          <td>{item.no}</td>
-                          <td className="item-name">{item.name}</td>
-                          <td>₩{formatCurrency(item.unit_price)}</td>
-                          <td>{item.quantity}</td>
-                          <td>₩{formatCurrency(item.amount)}</td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        // item_id별 할인 그룹핑
+                        const byItem = {};
+                        const unlinked = [];
+                        detailData.discounts?.forEach(d => {
+                          if (d.item_id) {
+                            (byItem[d.item_id] = byItem[d.item_id] || []).push(d);
+                          } else {
+                            unlinked.push(d);
+                          }
+                        });
+                        return (
+                          <>
+                            {detailData.items?.map((item, index) => (
+                              <>
+                                <tr key={index}>
+                                  <td>{item.no}</td>
+                                  <td className="item-name">{item.name}</td>
+                                  <td>₩{formatCurrency(item.unit_price)}</td>
+                                  <td>{item.quantity}</td>
+                                  <td>₩{formatCurrency(item.amount)}</td>
+                                </tr>
+                                {byItem[item.id]?.map((d, di) => (
+                                  <tr key={`d-${item.id}-${di}`} className="discount-row">
+                                    <td></td>
+                                    <td className="item-name discount-name">{d.name}</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td className="discount-amount">-₩{formatCurrency(d.amount)}</td>
+                                  </tr>
+                                ))}
+                              </>
+                            ))}
+                            {unlinked.map((d, index) => (
+                              <tr key={`u-${index}`} className="discount-row">
+                                <td></td>
+                                <td></td>
+                                <td className="item-name discount-name">{d.name}</td>
+                                <td></td>
+                                <td className="discount-amount">-₩{formatCurrency(d.amount)}</td>
+                              </tr>
+                            ))}
+                          </>
+                        );
+                      })()}
                     </tbody>
                   </table>
                 </div>

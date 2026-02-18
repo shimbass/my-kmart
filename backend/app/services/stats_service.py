@@ -2,7 +2,6 @@
 from supabase import Client
 from datetime import datetime, timedelta
 from collections import defaultdict
-import re
 
 
 class StatsService:
@@ -10,54 +9,25 @@ class StatsService:
         self.client = client
 
     def _parse_date(self, date_str: str) -> datetime | None:
-        """YY-MM-DD 형식의 날짜 문자열을 datetime으로 변환"""
+        """YY-MM-DD 또는 YYYY-MM-DD 형식의 날짜 문자열을 datetime으로 변환"""
         if not date_str:
             return None
         try:
-            # YY-MM-DD 형식
             if len(date_str) == 8:
                 return datetime.strptime(date_str, "%y-%m-%d")
-            # YYYY-MM-DD 형식
             return datetime.strptime(date_str[:10], "%Y-%m-%d")
         except ValueError:
             return None
 
-    def _filter_by_date(self, receipts: list, start_date: str, end_date: str) -> list:
-        """영수증을 날짜로 필터링"""
+    def _apply_date_filter(self, query, start_date: str, end_date: str):
+        """purchase_date 컬럼에 DB 레벨 날짜 필터 적용"""
         start = self._parse_date(start_date)
         end = self._parse_date(end_date)
-
-        if not start and not end:
-            return receipts
-
-        filtered = []
-        for r in receipts:
-            purchase_dt = r.get("purchase_datetime", "")
-            if not purchase_dt:
-                continue
-
-            # YY-MM-DD HH:MM 형식에서 날짜 부분 추출
-            match = re.match(r"(\d{2})-(\d{2})-(\d{2})", purchase_dt)
-            if not match:
-                continue
-
-            try:
-                receipt_date = datetime(
-                    2000 + int(match.group(1)),
-                    int(match.group(2)),
-                    int(match.group(3))
-                )
-
-                if start and receipt_date < start:
-                    continue
-                if end and receipt_date > end:
-                    continue
-
-                filtered.append(r)
-            except ValueError:
-                continue
-
-        return filtered
+        if start:
+            query = query.gte("purchase_date", start.isoformat())
+        if end:
+            query = query.lt("purchase_date", (end + timedelta(days=1)).isoformat())
+        return query
 
     async def get_summary(self, start_date: str = None, end_date: str = None) -> dict:
         """기간별 요약 통계"""
@@ -65,8 +35,10 @@ class StatsService:
             return {"success": False, "error": "데이터베이스 연결 없음"}
 
         try:
-            result = self.client.table("receipts").select("*").execute()
-            receipts = self._filter_by_date(result.data, start_date, end_date)
+            query = self.client.table("receipts").select("total_amount")
+            query = self._apply_date_filter(query, start_date, end_date)
+            result = query.execute()
+            receipts = result.data
 
             total_amount = sum(r.get("total_amount", 0) for r in receipts)
             receipt_count = len(receipts)
@@ -89,20 +61,21 @@ class StatsService:
             return {"success": False, "error": "데이터베이스 연결 없음"}
 
         try:
-            result = self.client.table("receipts").select("*").execute()
-            receipts = self._filter_by_date(result.data, start_date, end_date)
+            query = self.client.table("receipts").select("purchase_date, total_amount")
+            query = self._apply_date_filter(query, start_date, end_date)
+            result = query.execute()
 
             monthly = defaultdict(lambda: {"total_amount": 0, "receipt_count": 0})
 
-            for r in receipts:
-                purchase_dt = r.get("purchase_datetime", "")
-                match = re.match(r"(\d{2})-(\d{2})-(\d{2})", purchase_dt)
-                if match:
-                    month_key = f"20{match.group(1)}.{match.group(2)}"
-                    monthly[month_key]["total_amount"] += r.get("total_amount", 0)
-                    monthly[month_key]["receipt_count"] += 1
+            for r in result.data:
+                pd = r.get("purchase_date")
+                if not pd:
+                    continue
+                # purchase_date는 ISO 8601 (2026-02-14T...)
+                month_key = pd[:7].replace("-", ".")  # "2026.02"
+                monthly[month_key]["total_amount"] += r.get("total_amount", 0)
+                monthly[month_key]["receipt_count"] += 1
 
-            # 정렬
             data = [
                 {"month": k, "total_amount": v["total_amount"], "receipt_count": v["receipt_count"]}
                 for k, v in sorted(monthly.items())
@@ -118,17 +91,17 @@ class StatsService:
             return {"success": False, "error": "데이터베이스 연결 없음"}
 
         try:
-            result = self.client.table("receipts").select("*").execute()
-            receipts = self._filter_by_date(result.data, start_date, end_date)
+            query = self.client.table("receipts").select("store_name, total_amount")
+            query = self._apply_date_filter(query, start_date, end_date)
+            result = query.execute()
 
             stores = defaultdict(lambda: {"total_amount": 0, "visit_count": 0})
 
-            for r in receipts:
+            for r in result.data:
                 store = r.get("store_name") or "기타"
                 stores[store]["total_amount"] += r.get("total_amount", 0)
                 stores[store]["visit_count"] += 1
 
-            # 금액순 정렬
             data = [
                 {"store_name": k, "total_amount": v["total_amount"], "visit_count": v["visit_count"]}
                 for k, v in sorted(stores.items(), key=lambda x: x[1]["total_amount"], reverse=True)
@@ -144,17 +117,17 @@ class StatsService:
             return {"success": False, "error": "데이터베이스 연결 없음"}
 
         try:
-            result = self.client.table("receipts").select("*").execute()
-            receipts = self._filter_by_date(result.data, start_date, end_date)
+            query = self.client.table("receipts").select("card_name, total_amount")
+            query = self._apply_date_filter(query, start_date, end_date)
+            result = query.execute()
 
             cards = defaultdict(lambda: {"total_amount": 0, "usage_count": 0})
 
-            for r in receipts:
+            for r in result.data:
                 card = r.get("card_name") or "기타"
                 cards[card]["total_amount"] += r.get("total_amount", 0)
                 cards[card]["usage_count"] += 1
 
-            # 금액순 정렬
             data = [
                 {"card_name": k, "total_amount": v["total_amount"], "usage_count": v["usage_count"]}
                 for k, v in sorted(cards.items(), key=lambda x: x[1]["total_amount"], reverse=True)
@@ -170,12 +143,13 @@ class StatsService:
             return {"success": False, "error": "데이터베이스 연결 없음"}
 
         try:
-            result = self.client.table("receipts").select("*").eq("store_name", store_name).execute()
-            receipts = self._filter_by_date(result.data, start_date, end_date)
+            query = self.client.table("receipts").select("card_name, total_amount").eq("store_name", store_name)
+            query = self._apply_date_filter(query, start_date, end_date)
+            result = query.execute()
 
             cards = defaultdict(lambda: {"total_amount": 0, "usage_count": 0})
 
-            for r in receipts:
+            for r in result.data:
                 card = r.get("card_name") or "기타"
                 cards[card]["total_amount"] += r.get("total_amount", 0)
                 cards[card]["usage_count"] += 1
@@ -195,16 +169,25 @@ class StatsService:
             return {"success": False, "error": "데이터베이스 연결 없음"}
 
         try:
-            # 영수증 조회
-            receipts_result = self.client.table("receipts").select("*").execute()
-            receipts = self._filter_by_date(receipts_result.data, start_date, end_date)
-            receipt_ids = [r["id"] for r in receipts]
+            # 날짜 필터로 영수증 ID + purchase_date만 조회
+            query = self.client.table("receipts").select("id, purchase_date")
+            query = self._apply_date_filter(query, start_date, end_date)
+            receipts_result = query.execute()
 
+            receipt_ids = [r["id"] for r in receipts_result.data]
             if not receipt_ids:
                 return {"success": True, "data": []}
 
-            # 영수증에 해당하는 아이템 조회
-            items_result = self.client.table("items").select("*").in_("receipt_id", receipt_ids).execute()
+            # 영수증 ID → purchase_date 매핑
+            receipt_dates = {
+                r["id"]: r.get("purchase_date")
+                for r in receipts_result.data
+            }
+
+            # 해당 영수증의 아이템 조회 (필요한 컬럼만)
+            items_result = self.client.table("items").select(
+                "name, quantity, amount, receipt_id"
+            ).in_("receipt_id", receipt_ids).execute()
 
             # 상품별 집계
             item_stats = defaultdict(lambda: {
@@ -212,9 +195,6 @@ class StatsService:
                 "total_amount": 0,
                 "purchase_dates": []
             })
-
-            # 영수증 ID -> 날짜 매핑
-            receipt_dates = {r["id"]: r.get("purchase_datetime", "") for r in receipts}
 
             for item in items_result.data:
                 name = item.get("name", "").strip()
@@ -225,19 +205,13 @@ class StatsService:
                 item_stats[name]["total_amount"] += item.get("amount", 0)
 
                 receipt_id = item.get("receipt_id")
-                if receipt_id and receipt_id in receipt_dates:
-                    date_str = receipt_dates[receipt_id]
-                    match = re.match(r"(\d{2})-(\d{2})-(\d{2})", date_str)
-                    if match:
-                        try:
-                            dt = datetime(
-                                2000 + int(match.group(1)),
-                                int(match.group(2)),
-                                int(match.group(3))
-                            )
-                            item_stats[name]["purchase_dates"].append(dt)
-                        except ValueError:
-                            pass
+                pd = receipt_dates.get(receipt_id)
+                if pd:
+                    try:
+                        dt = datetime.fromisoformat(pd[:19])  # TZ 부분 제거
+                        item_stats[name]["purchase_dates"].append(dt)
+                    except ValueError:
+                        pass
 
             # 평균 구매 주기 계산
             data = []
@@ -247,7 +221,7 @@ class StatsService:
 
                 if len(dates) >= 2:
                     intervals = [(dates[i+1] - dates[i]).days for i in range(len(dates)-1)]
-                    intervals = [i for i in intervals if i > 0]  # 같은 날 구매 제외
+                    intervals = [i for i in intervals if i > 0]
                     if intervals:
                         avg_interval = sum(intervals) // len(intervals)
 
@@ -258,7 +232,6 @@ class StatsService:
                     "avg_interval_days": avg_interval
                 })
 
-            # 구매 횟수순 정렬
             data.sort(key=lambda x: x["purchase_count"], reverse=True)
 
             return {"success": True, "data": data[:limit]}

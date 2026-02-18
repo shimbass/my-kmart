@@ -464,6 +464,24 @@
   border-bottom: none;
 }
 
+/* 할인 행 */
+.discount-row td {
+  background: var(--color-bg-secondary);
+}
+
+.discount-name {
+  color: var(--color-danger) !important;
+  font-size: var(--font-size-xs) !important;
+  text-align: left !important;
+}
+
+.discount-amount {
+  color: var(--color-danger) !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Monaco", "Liberation Mono", monospace;
+}
+
 .modal-total {
   display: flex;
   justify-content: space-between;
